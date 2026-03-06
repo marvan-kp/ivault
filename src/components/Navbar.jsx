@@ -1,9 +1,20 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, Instagram, Phone } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = () => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+            setSearchQuery('');
+        }
+    };
+
     return (
         <nav className="navbar glass">
             <div className="container nav-container">
@@ -14,14 +25,19 @@ const Navbar = () => {
                 <div className="nav-links">
                     <Link to="/">Home</Link>
                     <Link to="/products">Products</Link>
-                    <Link to="/products">Categories</Link>
-                    <Link to="/products">Trending</Link>
+                    <Link to="/categories">Categories</Link>
+                    <Link to="/trending">Trending</Link>
                 </div>
                 <div className="nav-actions">
-                    <div className="search-bar">
+                    <form className="search-bar" onSubmit={handleSearch}>
                         <Search size={18} />
-                        <input type="text" placeholder="Search..." />
-                    </div>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </form>
                     <Link to="/wishlist" className="action-icon" aria-label="Wishlist">
                         <Heart size={20} />
                     </Link>

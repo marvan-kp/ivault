@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import ProductCard from '../components/ProductCard';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
@@ -8,9 +8,10 @@ import './Products.css';
 const Products = () => {
     const { products, toggleWishlist, isWishlisted } = useShop();
     const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
 
     // States for filters
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [selectedCategory, setSelectedCategory] = useState(searchParams.get('filter') || 'All');
     const [selectedBrand, setSelectedBrand] = useState('All');
     const [sortBy, setSortBy] = useState('newest');
@@ -28,8 +29,35 @@ const Products = () => {
         return matchesSearch && matchesCategory && matchesBrand;
     });
 
-    // Apply sorting
-    filteredProducts.sort((a, b) => {
+    // Update selected category and search when URL query param changes
+    useEffect(() => {
+        const filter = searchParams.get('filter');
+        if (filter) {
+            setSelectedCategory(filter);
+        }
+
+        const search = searchParams.get('search');
+        if (search !== null) {
+            setSearchTerm(search);
+        }
+    }, [searchParams]);
+
+    // Apply special page routing filters
+    let pageFilteredProducts = filteredProducts;
+    let pageTitle = "Shop Collection";
+
+    if (location.pathname === '/trending') {
+        pageFilteredProducts = filteredProducts.filter(p => p.isTrending);
+        pageTitle = "Trending Products";
+    } else if (location.pathname === '/deals') {
+        pageFilteredProducts = filteredProducts.filter(p => p.isFlashDeal);
+        pageTitle = "Flash Deals";
+    } else if (location.pathname === '/categories') {
+        pageTitle = "All Categories";
+    }
+
+    // Apply sorting to the final list
+    pageFilteredProducts.sort((a, b) => {
         switch (sortBy) {
             case 'price-low':
                 return a.discountPrice - b.discountPrice;
@@ -39,14 +67,6 @@ const Products = () => {
                 return b.id - a.id;
         }
     });
-
-    // Update selected category when URL query param changes
-    useEffect(() => {
-        const filter = searchParams.get('filter');
-        if (filter) {
-            setSelectedCategory(filter);
-        }
-    }, [searchParams]);
 
     const FilterSidebar = () => (
         <div className="filter-sidebar">
@@ -101,7 +121,7 @@ const Products = () => {
     return (
         <div className="products-page container">
             <div className="page-header">
-                <h1 className="page-title">Shop Collection</h1>
+                <h1 className="page-title">{pageTitle}</h1>
 
                 <div className="products-toolbar">
                     <div className="search-box">
@@ -140,7 +160,7 @@ const Products = () => {
                 </div>
 
                 <div className="products-grid-container">
-                    {filteredProducts.length === 0 ? (
+                    {pageFilteredProducts.length === 0 ? (
                         <div className="empty-state">
                             <h2>No products found</h2>
                             <p>Try adjusting your search or filters.</p>
@@ -158,9 +178,9 @@ const Products = () => {
                         </div>
                     ) : (
                         <>
-                            <p className="results-count">Showing {filteredProducts.length} results</p>
+                            <p className="results-count">Showing {pageFilteredProducts.length} results</p>
                             <div className="product-grid">
-                                {filteredProducts.map(product => (
+                                {pageFilteredProducts.map(product => (
                                     <ProductCard
                                         key={product.id}
                                         product={product}
