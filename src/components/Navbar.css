@@ -18,13 +18,28 @@
 .nav-logo {
     display: flex;
     align-items: center;
+    gap: 4px;
+    text-decoration: none;
+}
+
+.nav-logo-image {
+    height: 150px;
+    object-fit: contain;
+    margin: -35px 0;
+    transform: scale(1.2);
 }
 
 .logo-text {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--color-text);
-    letter-spacing: -0.5px;
+    color: #C9A227;
+    letter-spacing: 1px;
+}
+
+.logo-subtext {
+    color: #fff;
+    font-weight: 400;
+    font-size: 1rem;
 }
 
 .nav-links {
@@ -95,6 +110,20 @@
 }
 
 @media (max-width: 768px) {
+    .nav-logo-image {
+        height: 80px;
+        margin: -15px 0;
+        transform: scale(1.1);
+    }
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
+    .logo-subtext {
+        font-size: 0.85rem;
+    }
+
     .nav-links {
         display: none;
     }

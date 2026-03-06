@@ -18,9 +18,9 @@ const Navbar = () => {
     return (
         <nav className="navbar glass">
             <div className="container nav-container">
-                <Link to="/" className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-                    <img src="/logo.png" alt="iVault Accessories" style={{ height: '150px', objectFit: 'contain', margin: '-35px 0', transform: 'scale(1.2)' }} />
-                    <span className="logo-text" style={{ color: '#C9A227', fontSize: '1.25rem', fontWeight: '700', letterSpacing: '1px' }}>iVault <span style={{ color: '#fff', fontWeight: '400', fontSize: '1rem' }}>Accessories</span></span>
+                <Link to="/" className="nav-logo">
+                    <img src="/logo.png" alt="iVault Accessories" className="nav-logo-image" />
+                    <span className="logo-text">iVault <span className="logo-subtext">Accessories</span></span>
                 </Link>
                 <div className="nav-links">
                     <Link to="/">Home</Link>
