@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iVault Accessories</title>
+  <style>
+    /* Aggressively hide Elfsight branding globally */
+    body .eapps-widget a[href*="elfsight.com"],
+    body .eapps-link,
+    body [class*="eapps-watermark"],
+    body [class*="eapps-instagram-feed-title"],
+    body [class*="WidgetBackground__Container-sc"] a,
+    body [class*="Badge__BadgeContainer-sc"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      position: absolute !important;
+      left: -9999px !important;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script src="https://elfsightcdn.com/platform.js" async></script>
+</body>
+
+</html>

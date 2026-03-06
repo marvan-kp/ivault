@@ -1,0 +1,318 @@
+import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useShop } from '../context/ShopContext';
+import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut } from 'lucide-react';
+import './AdminDashboard.css';
+
+const AdminDashboard = () => {
+    const { products, isAdmin, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentProduct, setCurrentProduct] = useState(null);
+
+    if (!isAdmin) {
+        return <Navigate to="/admin" />;
+    }
+
+    // Dashboard Stats
+    const totalProducts = products.length;
+    const trendingCount = products.filter(p => p.isTrending).length;
+    const dealsCount = products.filter(p => p.isFlashDeal).length;
+    const lowStockCount = products.filter(p => p.stock < 5).length;
+
+    const handleToggleStatus = (id, field, value) => {
+        const product = products.find(p => p.id === id);
+        if (product) {
+            updateProduct({ ...product, [field]: !value });
+        }
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            deleteProduct(id);
+        }
+    };
+
+    const openAddModal = () => {
+        setCurrentProduct({
+            name: '',
+            brand: '',
+            category: 'Accessories',
+            media: [],
+            mrp: 0,
+            discountPrice: 0,
+            stock: 0,
+            description: '',
+            isTrending: false,
+            isFlashDeal: false
+        });
+        setIsEditing(true);
+    };
+
+    const openEditModal = (product) => {
+        setCurrentProduct({ ...product, media: product.media || (product.image ? [product.image] : []) });
+        setIsEditing(true);
+    };
+
+    const handleSaveProduct = (e) => {
+        e.preventDefault();
+        if (currentProduct.id) {
+            updateProduct(currentProduct);
+        } else {
+            addProduct(currentProduct);
+        }
+        setIsEditing(false);
+        setCurrentProduct(null);
+    };
+
+    return (
+        <div className="admin-dashboard container">
+            <div className="admin-header">
+                <div>
+                    <h1 className="page-title">Dashboard Overview</h1>
+                    <p className="admin-subtitle">Manage your products and store settings.</p>
+                </div>
+                <button className="btn-secondary btn-logout" onClick={logoutAdmin}>
+                    <LogOut size={18} /> Logout
+                </button>
+            </div>
+
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ color: '#3498db' }}><Package size={24} /></div>
+                    <div className="stat-info">
+                        <h3>Total Products</h3>
+                        <p>{totalProducts}</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ color: '#e74c3c' }}><TrendingUp size={24} /></div>
+                    <div className="stat-info">
+                        <h3>Trending</h3>
+                        <p>{trendingCount}</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ color: '#9b59b6' }}><Zap size={24} /></div>
+                    <div className="stat-info">
+                        <h3>Flash Deals</h3>
+                        <p>{dealsCount}</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ color: '#f1c40f' }}><AlertTriangle size={24} /></div>
+                    <div className="stat-info">
+                        <h3>Low Stock Alerts</h3>
+                        <p>{lowStockCount}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="products-manager">
+                <div className="manager-header">
+                    <h2>Product Inventory</h2>
+                    <button className="btn-primary btn-add" onClick={openAddModal}>
+                        <Plus size={18} /> Add Product
+                    </button>
+                </div>
+
+                <div className="table-responsive">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price / MRP</th>
+                                <th>Stock</th>
+                                <th>Status Toggles</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.map(product => (
+                                <tr key={product.id}>
+                                    <td>
+                                        <div className="table-product-cell">
+                                            {product.media && product.media[0] ? (
+                                                product.media[0].startsWith('data:video') ? (
+                                                    <video src={product.media[0]} className="table-img" style={{ objectFit: 'cover' }} muted />
+                                                ) : (
+                                                    <img src={product.media[0]} alt={product.name} className="table-img" />
+                                                )
+                                            ) : (
+                                                <img src={product.image || 'https://placehold.co/100x100/1c1c1c/c9a227'} alt={product.name} className="table-img" />
+                                            )}
+                                            <div>
+                                                <strong>{product.name}</strong>
+                                                <span className="table-category">{product.category}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="table-price">₹{product.discountPrice?.toLocaleString()}</div>
+                                        <div className="table-mrp">₹{product.mrp?.toLocaleString()}</div>
+                                    </td>
+                                    <td>
+                                        <span className={`stock-badge ${product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'in'}`}>
+                                            {product.stock} in stock
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="status-toggles">
+                                            <label className="toggle-label">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={product.isTrending}
+                                                    onChange={() => handleToggleStatus(product.id, 'isTrending', product.isTrending)}
+                                                />
+                                                Trending
+                                            </label>
+                                            <label className="toggle-label">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={product.isFlashDeal}
+                                                    onChange={() => handleToggleStatus(product.id, 'isFlashDeal', product.isFlashDeal)}
+                                                />
+                                                Flash Deal
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="table-actions">
+                                            <button className="btn-icon-small edit" onClick={() => openEditModal(product)}>
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button className="btn-icon-small delete" onClick={() => handleDelete(product.id)}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {products.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="text-center">No products found. Add one to get started.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Product Edit/Add Modal */}
+            {isEditing && (
+                <div className="modal-overlay">
+                    <div className="modal-content glass">
+                        <h2>{currentProduct.id ? 'Edit Product' : 'Add New Product'}</h2>
+                        <form onSubmit={handleSaveProduct} className="product-form">
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Product Name</label>
+                                    <input type="text" required value={currentProduct.name} onChange={e => setCurrentProduct({ ...currentProduct, name: e.target.value })} />
+                                </div>
+                                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                    <label>Media (Images/Videos - Max 5)</label>
+                                    <div className="media-preview-list" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
+                                        {(currentProduct.media || []).map((url, i) => (
+                                            <div key={i} style={{ position: 'relative', flex: '0 0 80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                                                {url.startsWith('data:video') ? (
+                                                    <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                )}
+                                                <button type="button" onClick={() => {
+                                                    const nm = [...(currentProduct.media || [])]; nm.splice(i, 1);
+                                                    setCurrentProduct({ ...currentProduct, media: nm });
+                                                }} style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '0 0 0 4px', cursor: 'pointer', padding: '2px 6px', fontSize: '10px' }}>X</button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {(currentProduct.media || []).length < 5 && (
+                                        <label style={{
+                                            display: 'block',
+                                            width: '100%',
+                                            padding: '12px',
+                                            background: 'var(--color-secondary)',
+                                            border: '1px dashed var(--glass-border)',
+                                            borderRadius: 'var(--radius-md)',
+                                            textAlign: 'center',
+                                            cursor: 'pointer',
+                                            color: 'var(--color-text)',
+                                            transition: 'all var(--transition-fast)'
+                                        }}
+                                            onMouseOver={(e) => e.target.style.borderColor = 'var(--color-accent)'}
+                                            onMouseOut={(e) => e.target.style.borderColor = 'var(--glass-border)'}
+                                        >
+                                            Click to Upload Image or Video
+                                            <input
+                                                type="file"
+                                                accept="image/*,video/*"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setCurrentProduct({ ...currentProduct, media: [...(currentProduct.media || []), reader.result] });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                    e.target.value = ''; // Reset input
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Category</label>
+                                    <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}>
+                                        <option value="Used Mobiles">Used Mobiles</option>
+                                        <option value="Back Covers">Back Covers</option>
+                                        <option value="Screen Guards">Screen Guards</option>
+                                        <option value="Smart Watches">Smart Watches</option>
+                                        <option value="AirPods">AirPods</option>
+                                        <option value="Fast Chargers">Fast Chargers</option>
+                                        <option value="Accessories">Accessories</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Brand</label>
+                                    <input type="text" required value={currentProduct.brand} onChange={e => setCurrentProduct({ ...currentProduct, brand: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="form-row three-cols">
+                                <div className="form-group">
+                                    <label>MRP (₹)</label>
+                                    <input type="number" required value={currentProduct.mrp} onChange={e => setCurrentProduct({ ...currentProduct, mrp: Number(e.target.value) })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Discount Price (₹)</label>
+                                    <input type="number" required value={currentProduct.discountPrice} onChange={e => setCurrentProduct({ ...currentProduct, discountPrice: Number(e.target.value) })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Stock Quantity</label>
+                                    <input type="number" required value={currentProduct.stock} onChange={e => setCurrentProduct({ ...currentProduct, stock: Number(e.target.value) })} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea rows="3" value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })}></textarea>
+                            </div>
+
+                            <div className="form-actions">
+                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Save Product</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default AdminDashboard;
