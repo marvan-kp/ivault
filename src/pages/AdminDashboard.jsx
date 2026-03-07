@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut, Loader, UploadCloud } from 'lucide-react';
-import { storage } from '../config/firebase';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut } from 'lucide-react';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { products, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
     const [isEditing, setIsEditing] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
 
     if (authLoading) {
@@ -44,7 +41,7 @@ const AdminDashboard = () => {
             name: '',
             brand: '',
             category: 'Accessories',
-            media: [],
+            image: '',
             mrp: 0,
             discountPrice: 0,
             stock: 0,
@@ -56,52 +53,21 @@ const AdminDashboard = () => {
     };
 
     const openEditModal = (product) => {
-        setCurrentProduct({ ...product, media: product.media || (product.image ? [product.image] : []) });
+        setCurrentProduct({ ...product });
         setIsEditing(true);
     };
 
-    const handleSaveProduct = async (e) => {
+    const handleSaveProduct = (e) => {
         e.preventDefault();
-        setIsUploading(true);
 
-        try {
-            let processedMedia = [];
-            const timestamp = Date.now();
-
-            // Process each media item
-            for (let i = 0; i < (currentProduct.media || []).length; i++) {
-                const item = currentProduct.media[i];
-
-                // If it's a new file (data URL base64 string from our file input)
-                if (item.startsWith('data:')) {
-                    const storageRef = ref(storage, `products/${timestamp}_${i}`);
-
-                    // uploadString handles data URLs automatically
-                    await uploadString(storageRef, item, 'data_url');
-                    const downloadURL = await getDownloadURL(storageRef);
-                    processedMedia.push(downloadURL);
-                } else {
-                    // It's already an existing URL (e.g. from editing an old product)
-                    processedMedia.push(item);
-                }
-            }
-
-            const productToSave = { ...currentProduct, media: processedMedia, image: processedMedia[0] || '' };
-
-            if (currentProduct.id) {
-                await updateProduct(productToSave);
-            } else {
-                await addProduct(productToSave);
-            }
-
-            setIsEditing(false);
-            setCurrentProduct(null);
-        } catch (error) {
-            console.error("Error saving product: ", error);
-            alert("Failed to upload images and save product. Please try again.");
-        } finally {
-            setIsUploading(false);
+        if (currentProduct.id) {
+            updateProduct(currentProduct);
+        } else {
+            addProduct(currentProduct);
         }
+
+        setIsEditing(false);
+        setCurrentProduct(null);
     };
 
     return (
@@ -249,57 +215,10 @@ const AdminDashboard = () => {
                                     <input type="text" required value={currentProduct.name} onChange={e => setCurrentProduct({ ...currentProduct, name: e.target.value })} />
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                                    <label>Media (Images/Videos - Max 5)</label>
-                                    <div className="media-preview-list" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
-                                        {(currentProduct.media || []).map((url, i) => (
-                                            <div key={i} style={{ position: 'relative', flex: '0 0 80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                                                {url.startsWith('data:video') ? (
-                                                    <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                )}
-                                                <button type="button" onClick={() => {
-                                                    const nm = [...(currentProduct.media || [])]; nm.splice(i, 1);
-                                                    setCurrentProduct({ ...currentProduct, media: nm });
-                                                }} style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '0 0 0 4px', cursor: 'pointer', padding: '2px 6px', fontSize: '10px' }}>X</button>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {(currentProduct.media || []).length < 5 && (
-                                        <label style={{
-                                            display: 'block',
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--color-secondary)',
-                                            border: '1px dashed var(--glass-border)',
-                                            borderRadius: 'var(--radius-md)',
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            color: 'var(--color-text)',
-                                            transition: 'all var(--transition-fast)'
-                                        }}
-                                            onMouseOver={(e) => e.target.style.borderColor = 'var(--color-accent)'}
-                                            onMouseOut={(e) => e.target.style.borderColor = 'var(--glass-border)'}
-                                        >
-                                            Click to Upload Image or Video
-                                            <input
-                                                type="file"
-                                                accept="image/*,video/*"
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
-                                                            setCurrentProduct({ ...currentProduct, media: [...(currentProduct.media || []), reader.result] });
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                    e.target.value = ''; // Reset input
-                                                }}
-                                            />
-                                        </label>
+                                    <label>Image URL</label>
+                                    <input type="url" required value={currentProduct.image} onChange={e => setCurrentProduct({ ...currentProduct, image: e.target.value })} placeholder="https://example.com/image.jpg" />
+                                    {currentProduct.image && (
+                                        <img src={currentProduct.image} alt="Preview" style={{ marginTop: '10px', height: '100px', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
                                     )}
                                 </div>
                             </div>
@@ -344,10 +263,8 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="form-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)} disabled={isUploading}>Cancel</button>
-                                <button type="submit" className="btn-primary" disabled={isUploading}>
-                                    {isUploading ? <><Loader className="animate-spin" size={18} style={{ marginRight: '8px' }} /> Uploading...</> : 'Save Product'}
-                                </button>
+                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Save Product</button>
                             </div>
                         </form>
                     </div>
