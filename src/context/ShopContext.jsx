@@ -60,10 +60,27 @@ const initialProducts = [
 ];
 
 export const ShopProvider = ({ children }) => {
-    const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('ivault_products');
-        return saved ? JSON.parse(saved) : initialProducts;
-    });
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch products from MongoDB Backend
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/products');
+                if (response.ok) {
+                    const data = await response.json();
+                    setProducts(data);
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
 
     const [wishlist, setWishlist] = useState(() => {
         const saved = localStorage.getItem('ivault_wishlist');
@@ -73,10 +90,6 @@ export const ShopProvider = ({ children }) => {
     const [isAdmin, setIsAdmin] = useState(() => {
         return localStorage.getItem('ivault_admin') === 'true';
     });
-
-    useEffect(() => {
-        localStorage.setItem('ivault_products', JSON.stringify(products));
-    }, [products]);
 
     useEffect(() => {
         localStorage.setItem('ivault_wishlist', JSON.stringify(wishlist));
@@ -96,16 +109,50 @@ export const ShopProvider = ({ children }) => {
         return wishlist.some(item => item.id === productId);
     };
 
-    const addProduct = (product) => {
-        setProducts(prev => [...prev, { ...product, id: Date.now() }]);
+    const addProduct = async (product) => {
+        try {
+            const tempId = Date.now();
+            const optimisticProduct = { ...product, id: tempId };
+            setProducts(prev => [optimisticProduct, ...prev]);
+
+            const response = await fetch('http://localhost:5000/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+
+            if (response.ok) {
+                const savedProduct = await response.json();
+                setProducts(prev => prev.map(p => p.id === tempId ? savedProduct : p));
+            } else {
+                setProducts(prev => prev.filter(p => p.id !== tempId)); // revert on error
+            }
+        } catch (error) {
+            console.error("Error adding product", error);
+        }
     };
 
-    const updateProduct = (updated) => {
-        setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
+    const updateProduct = async (updated) => {
+        try {
+            setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
+
+            await fetch(`http://localhost:5000/api/products/${updated.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated)
+            });
+        } catch (error) {
+            console.error("Error updating product", error);
+        }
     };
 
-    const deleteProduct = (id) => {
-        setProducts(prev => prev.filter(p => p.id !== id));
+    const deleteProduct = async (id) => {
+        try {
+            setProducts(prev => prev.filter(p => p.id !== id));
+            await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
+        } catch (error) {
+            console.error("Error deleting product", error);
+        }
     };
 
     const loginAdmin = (username, password) => {
@@ -125,6 +172,7 @@ export const ShopProvider = ({ children }) => {
     return (
         <ShopContext.Provider value={{
             products,
+            loading,
             wishlist,
             isAdmin,
             toggleWishlist,
