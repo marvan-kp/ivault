@@ -78,7 +78,7 @@ const AdminDashboard = () => {
         setIsUploading(true);
         const formData = new FormData();
         formData.append('image', file);
-        formData.append('key', '22de4c0b5ce77df60783fa9760dedfac'); // Free tier API key
+        formData.append('key', '315f617f80eb4a8592a1b143aa1409ee'); // User's API key
 
         try {
             const response = await fetch('https://api.imgbb.com/1/upload', {
