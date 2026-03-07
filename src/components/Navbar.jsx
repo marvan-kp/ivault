@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, Instagram, Phone } from 'lucide-react';
+import { Search, Heart, Instagram, Phone, Menu, X } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleSearch = (e) => {
@@ -12,21 +13,37 @@ const Navbar = () => {
         if (searchQuery.trim()) {
             navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
             setSearchQuery('');
+            setIsMenuOpen(false); // Close menu on search
         }
+    };
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const closeMenu = () => {
+        setIsMenuOpen(false);
     };
 
     return (
         <nav className="navbar glass">
             <div className="container nav-container">
-                <Link to="/" className="nav-logo">
+                <button className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+                    {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+
+                <Link to="/" className="nav-logo" onClick={closeMenu}>
                     <img src="/logo.png" alt="iVault Accessories" className="nav-logo-image" />
                     <span className="logo-text">iVault <span className="logo-subtext">Accessories</span></span>
                 </Link>
-                <div className="nav-links">
-                    <Link to="/">Home</Link>
-                    <Link to="/products">Products</Link>
-                    <Link to="/categories">Categories</Link>
-                    <Link to="/trending">Trending</Link>
+
+                <div className={`mobile-menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={closeMenu}></div>
+
+                <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+                    <Link to="/" onClick={closeMenu}>Home</Link>
+                    <Link to="/products" onClick={closeMenu}>Products</Link>
+                    <Link to="/categories" onClick={closeMenu}>Categories</Link>
+                    <Link to="/trending" onClick={closeMenu}>Trending</Link>
                 </div>
                 <div className="nav-actions">
                     <form className="search-bar" onSubmit={handleSearch}>
