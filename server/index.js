@@ -14,12 +14,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.0:5173', 'https://marvan-kp.github.io'],
+    credentials: true,
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://marvankp847_db_user:jD4cTT1aNrI3eVDE@cluster0.4dgc0s8.mongodb.net/ivault";
+// Bypassing DNS SRV lookup by using the explicit node connection string
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://ivault_2026:AMbMqjZMHeVGkvKM@ac-fg8uir0-shard-00-00.xeb8weo.mongodb.net:27017,ac-fg8uir0-shard-00-01.xeb8weo.mongodb.net:27017,ac-fg8uir0-shard-00-02.xeb8weo.mongodb.net:27017/ivault?ssl=true&replicaSet=atlas-fg8uir0-shard-0&authSource=admin&retryWrites=true&w=majority";
 
 mongoose.connect(MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
@@ -45,6 +49,10 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.model('Product', productSchema);
 
 // API Routes
+
+app.get('/', (req, res) => {
+    res.send('iVault Accessories API is running');
+});
 
 // Get all products
 app.get('/api/products', async (req, res) => {
