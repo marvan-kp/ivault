@@ -279,7 +279,7 @@
 /* Mobile Adjustments for 2-column layout */
 @media (max-width: 768px) {
     .product-info {
-        padding: 12px;
+        padding: 10px;
     }
 
     .badge {
@@ -324,27 +324,24 @@
     }
 
     .product-price-row {
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 6px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
     }
 
     .product-actions {
-        gap: 8px;
+        gap: 6px;
     }
 
-    .btn-icon {
-        width: 36px;
-        height: 36px;
-    }
-
-    .btn-icon svg {
-        width: 16px;
-        height: 16px;
+    .btn-icon.btn-view {
+        display: none;
+        /* Hide eye icon on mobile to give space to Buy button */
     }
 
     .btn-buy {
-        height: 36px;
-        font-size: 0.85rem;
+        height: 32px;
+        font-size: 0.75rem;
+        padding: 0 8px;
     }
 
     .btn-buy svg {

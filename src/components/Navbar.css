@@ -111,17 +111,14 @@
 
 @media (max-width: 768px) {
     .nav-logo-image {
-        height: 80px;
-        margin: -15px 0;
+        height: 60px;
+        max-width: 140px;
+        margin: -10px 0;
         transform: scale(1.1);
     }
 
     .logo-text {
-        font-size: 1.1rem;
-    }
-
-    .logo-subtext {
-        font-size: 0.85rem;
+        display: none;
     }
 
     .nav-links {
@@ -130,5 +127,14 @@
 
     .search-bar {
         display: none;
+    }
+
+    .nav-actions {
+        gap: 12px;
+    }
+
+    .action-icon svg {
+        width: 18px;
+        height: 18px;
     }
 }
