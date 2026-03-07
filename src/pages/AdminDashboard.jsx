@@ -5,12 +5,20 @@ import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut, L
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const { products, categories, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct, addCategory, deleteCategory } = useShop();
+    const { products, categories, promoCodes, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct, addCategory, deleteCategory, addPromoCode, deletePromoCode, togglePromoCodeStatus } = useShop();
     const [isEditing, setIsEditing] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isManagingCategories, setIsManagingCategories] = useState(false);
+    const [activeTab, setActiveTab] = useState('products'); // 'products' or 'promos'
     const [newCategoryName, setNewCategoryName] = useState('');
     const [currentProduct, setCurrentProduct] = useState(null);
+
+    const [newPromo, setNewPromo] = useState({
+        code: '',
+        discountType: 'percentage', // 'percentage' or 'flat'
+        discountValue: 0,
+        isActive: true
+    });
 
     if (authLoading) {
         return <div className="admin-dashboard container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}><h2>Loading Admin Details...</h2></div>;
@@ -150,6 +158,26 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleAddPromoCode = async (e) => {
+        e.preventDefault();
+        if (newPromo.code && newPromo.discountValue > 0) {
+            const result = await addPromoCode(newPromo);
+            if (result.success) {
+                setNewPromo({ code: '', discountType: 'percentage', discountValue: 0, isActive: true });
+            } else {
+                alert(result.message);
+            }
+        } else {
+            alert('Please provide a valid code and discount value.');
+        }
+    };
+
+    const handleDeletePromo = (id) => {
+        if (window.confirm('Are you sure you want to delete this promo code?')) {
+            deletePromoCode(id);
+        }
+    };
+
     return (
         <div className="admin-dashboard container">
             <div className="admin-header">
@@ -193,100 +221,198 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            <div className="products-manager">
-                <div className="manager-header">
-                    <h2>Product Inventory</h2>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="btn-secondary btn-add" onClick={() => setIsManagingCategories(true)}>
-                            Manage Categories
-                        </button>
-                        <button className="btn-primary btn-add" onClick={openAddModal}>
-                            <Plus size={18} /> Add Product
-                        </button>
+            <div className="admin-tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
+                <button
+                    className={`btn-secondary ${activeTab === 'products' ? 'active-tab' : ''}`}
+                    onClick={() => setActiveTab('products')}
+                    style={{ background: activeTab === 'products' ? 'var(--color-primary)' : 'transparent', border: activeTab === 'products' ? '1px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)', color: activeTab === 'products' ? 'var(--color-accent)' : 'inherit' }}
+                >
+                    Products
+                </button>
+                <button
+                    className={`btn-secondary ${activeTab === 'promos' ? 'active-tab' : ''}`}
+                    onClick={() => setActiveTab('promos')}
+                    style={{ background: activeTab === 'promos' ? 'var(--color-primary)' : 'transparent', border: activeTab === 'promos' ? '1px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)', color: activeTab === 'promos' ? 'var(--color-accent)' : 'inherit' }}
+                >
+                    Promo Codes
+                </button>
+            </div>
+
+            {activeTab === 'products' && (
+                <div className="products-manager">
+                    <div className="manager-header">
+                        <h2>Product Inventory</h2>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button className="btn-secondary btn-add" onClick={() => setIsManagingCategories(true)}>
+                                Manage Categories
+                            </button>
+                            <button className="btn-primary btn-add" onClick={openAddModal}>
+                                <Plus size={18} /> Add Product
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="table-responsive">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price / MRP</th>
+                                    <th>Stock</th>
+                                    <th>Status Toggles</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {products.map(product => (
+                                    <tr key={product.id}>
+                                        <td>
+                                            <div className="table-product-cell">
+                                                {product.media && product.media[0] ? (
+                                                    product.media[0].startsWith('data:video') ? (
+                                                        <video src={product.media[0]} className="table-img" style={{ objectFit: 'cover' }} muted />
+                                                    ) : (
+                                                        <img src={product.media[0]} alt={product.name} className="table-img" />
+                                                    )
+                                                ) : (
+                                                    <img src={product.image || 'https://placehold.co/100x100/1c1c1c/c9a227'} alt={product.name} className="table-img" />
+                                                )}
+                                                <div>
+                                                    <strong>{product.name}</strong>
+                                                    <span className="table-category">{product.category}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="table-price">₹{product.discountPrice?.toLocaleString()}</div>
+                                            <div className="table-mrp">₹{product.mrp?.toLocaleString()}</div>
+                                        </td>
+                                        <td>
+                                            <span className={`stock-badge ${product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'in'}`}>
+                                                {product.stock} in stock
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="status-toggles">
+                                                <label className="toggle-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={product.isTrending}
+                                                        onChange={() => handleToggleStatus(product.id, 'isTrending', product.isTrending)}
+                                                    />
+                                                    Trending
+                                                </label>
+                                                <label className="toggle-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={product.isFlashDeal}
+                                                        onChange={() => handleToggleStatus(product.id, 'isFlashDeal', product.isFlashDeal)}
+                                                    />
+                                                    Flash Deal
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="table-actions">
+                                                <button className="btn-icon-small edit" onClick={() => openEditModal(product)}>
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button className="btn-icon-small delete" onClick={() => handleDelete(product.id)}>
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {products.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="text-center">No products found. Add one to get started.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            )}
 
-                <div className="table-responsive">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Price / MRP</th>
-                                <th>Stock</th>
-                                <th>Status Toggles</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {products.map(product => (
-                                <tr key={product.id}>
-                                    <td>
-                                        <div className="table-product-cell">
-                                            {product.media && product.media[0] ? (
-                                                product.media[0].startsWith('data:video') ? (
-                                                    <video src={product.media[0]} className="table-img" style={{ objectFit: 'cover' }} muted />
-                                                ) : (
-                                                    <img src={product.media[0]} alt={product.name} className="table-img" />
-                                                )
-                                            ) : (
-                                                <img src={product.image || 'https://placehold.co/100x100/1c1c1c/c9a227'} alt={product.name} className="table-img" />
-                                            )}
-                                            <div>
-                                                <strong>{product.name}</strong>
-                                                <span className="table-category">{product.category}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="table-price">₹{product.discountPrice?.toLocaleString()}</div>
-                                        <div className="table-mrp">₹{product.mrp?.toLocaleString()}</div>
-                                    </td>
-                                    <td>
-                                        <span className={`stock-badge ${product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'in'}`}>
-                                            {product.stock} in stock
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="status-toggles">
-                                            <label className="toggle-label">
+            {activeTab === 'promos' && (
+                <div className="promos-manager">
+                    <div className="manager-header" style={{ marginBottom: '20px' }}>
+                        <h2>Promo Codes Management</h2>
+                    </div>
+
+                    <div className="promo-creation-card glass" style={{ padding: '20px', marginBottom: '30px' }}>
+                        <h3>Create New Promo Code</h3>
+                        <form onSubmit={handleAddPromoCode} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end', marginTop: '15px' }}>
+                            <div className="form-group" style={{ flex: '1 1 200px' }}>
+                                <label>Code (e.g. SAVE20)</label>
+                                <input type="text" required value={newPromo.code} onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })} placeholder="SUMMER50" />
+                            </div>
+                            <div className="form-group" style={{ flex: '1 1 150px' }}>
+                                <label>Discount Type</label>
+                                <select value={newPromo.discountType} onChange={e => setNewPromo({ ...newPromo, discountType: e.target.value })}>
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="flat">Flat Amount (₹)</option>
+                                </select>
+                            </div>
+                            <div className="form-group" style={{ flex: '1 1 150px' }}>
+                                <label>Value</label>
+                                <input type="number" required min="1" value={newPromo.discountValue} onChange={e => setNewPromo({ ...newPromo, discountValue: Number(e.target.value) })} />
+                            </div>
+                            <button type="submit" className="btn-primary" style={{ height: '42px', marginBottom: '8px' }}>Add Code</button>
+                        </form>
+                    </div>
+
+                    <div className="table-responsive">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Promo Code</th>
+                                    <th>Discount</th>
+                                    <th>Status</th>
+                                    <th>Created On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {promoCodes.map(promo => (
+                                    <tr key={promo.id}>
+                                        <td><strong>{promo.code}</strong></td>
+                                        <td>
+                                            <span style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
+                                                {promo.discountType === 'percentage' ? `${promo.discountValue}% OFF` : `₹${promo.discountValue} OFF`}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <label className="toggle-label" style={{ cursor: 'pointer' }}>
                                                 <input
                                                     type="checkbox"
-                                                    checked={product.isTrending}
-                                                    onChange={() => handleToggleStatus(product.id, 'isTrending', product.isTrending)}
+                                                    checked={promo.isActive}
+                                                    onChange={() => togglePromoCodeStatus(promo.id, promo.isActive)}
                                                 />
-                                                Trending
+                                                <span className={`stock-badge ${promo.isActive ? 'in' : 'out'}`} style={{ marginLeft: '10px' }}>
+                                                    {promo.isActive ? 'Active' : 'Disabled'}
+                                                </span>
                                             </label>
-                                            <label className="toggle-label">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={product.isFlashDeal}
-                                                    onChange={() => handleToggleStatus(product.id, 'isFlashDeal', product.isFlashDeal)}
-                                                />
-                                                Flash Deal
-                                            </label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="table-actions">
-                                            <button className="btn-icon-small edit" onClick={() => openEditModal(product)}>
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button className="btn-icon-small delete" onClick={() => handleDelete(product.id)}>
+                                        </td>
+                                        <td>{new Date(promo.createdAt).toLocaleDateString()}</td>
+                                        <td>
+                                            <button className="btn-icon-small delete" onClick={() => handleDeletePromo(promo.id)}>
                                                 <Trash2 size={16} />
                                             </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {products.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" className="text-center">No products found. Add one to get started.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {promoCodes.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="text-center">No promo codes found. Create one above.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Product Edit/Add Modal */}
             {isEditing && (

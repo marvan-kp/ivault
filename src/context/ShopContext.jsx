@@ -65,6 +65,7 @@ const initialProducts = [
 export const ShopProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [promoCodes, setPromoCodes] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Listen for Realtime Database changes
@@ -99,10 +100,25 @@ export const ShopProvider = ({ children }) => {
             setLoading(false);
         });
 
+        // Listen for Promo Codes
+        const promoCodesRef = ref(database, 'promoCodes');
+        const unsubscribePromoCodes = onValue(promoCodesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const promoList = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                setPromoCodes(promoList);
+            } else {
+                setPromoCodes([]);
+            }
+        }, (error) => {
+            console.error("Error fetching promo codes from Firebase:", error);
+        });
+
         // Cleanup listener on unmount
         return () => {
             unsubscribeProducts();
             unsubscribeCategories();
+            unsubscribePromoCodes();
         };
     }, []);
 
@@ -232,6 +248,39 @@ export const ShopProvider = ({ children }) => {
         }
     };
 
+    // Promo Code Methods
+    const addPromoCode = async (promoData) => {
+        try {
+            // Assume promoData contains { code: 'SAVE10', discountType: 'percentage', discountValue: 10, isActive: true }
+            const id = promoData.code.toUpperCase(); // Ensure codes are uppercase and serve as the unique ID
+            const newPromo = { ...promoData, id, code: id, createdAt: Date.now() };
+            const promoRef = ref(database, `promoCodes/${id}`);
+            await set(promoRef, newPromo);
+            return { success: true };
+        } catch (error) {
+            console.error("Error adding promo code", error);
+            return { success: false, message: error.message };
+        }
+    };
+
+    const togglePromoCodeStatus = async (id, currentStatus) => {
+        try {
+            const promoRef = ref(database, `promoCodes/${id}`);
+            await update(promoRef, { isActive: !currentStatus });
+        } catch (error) {
+            console.error("Error updating promo code", error);
+        }
+    };
+
+    const deletePromoCode = async (id) => {
+        try {
+            const promoRef = ref(database, `promoCodes/${id}`);
+            await remove(promoRef);
+        } catch (error) {
+            console.error("Error deleting promo code", error);
+        }
+    };
+
     const loginAdmin = async (email, password) => {
         try {
             await signInWithEmailAndPassword(auth, email, password);
@@ -262,6 +311,7 @@ export const ShopProvider = ({ children }) => {
         <ShopContext.Provider value={{
             products,
             categories,
+            promoCodes,
             loading,
             authLoading,
             wishlist,
@@ -278,6 +328,9 @@ export const ShopProvider = ({ children }) => {
             deleteProduct,
             addCategory,
             deleteCategory,
+            addPromoCode,
+            togglePromoCodeStatus,
+            deletePromoCode,
             loginAdmin,
             logoutAdmin
         }}>
