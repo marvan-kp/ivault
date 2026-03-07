@@ -6,7 +6,7 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 import './Products.css';
 
 const Products = () => {
-    const { products, toggleWishlist, isWishlisted } = useShop();
+    const { products, categories, toggleWishlist, isWishlisted } = useShop();
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
 
@@ -17,9 +17,20 @@ const Products = () => {
     const [sortBy, setSortBy] = useState('newest');
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-    // Extract unique categories and brands
-    const categories = ['All', ...new Set(products.map(p => p.category))];
+    // Extract unique brands (keep brands dynamic based on products for now)
     const brands = ['All', ...new Set(products.map(p => p.brand))];
+
+    // Build the category list from our dynamic Firebase categories
+    const categoryNames = ['All', ...categories.map(c => c.name)];
+    // Fallback if categories are empty (e.g. initial load) but products exist
+    if (categories.length === 0 && products.length > 0) {
+        const uniqueProductCategories = new Set(products.map(p => p.category));
+        uniqueProductCategories.forEach(cat => {
+            if (!categoryNames.includes(cat)) {
+                categoryNames.push(cat);
+            }
+        });
+    }
 
     // Apply filters
     let filteredProducts = products.filter(product => {
@@ -80,7 +91,7 @@ const Products = () => {
             <div className="filter-group">
                 <h4>Category</h4>
                 <div className="filter-options">
-                    {categories.map(cat => (
+                    {categoryNames.map(cat => (
                         <label key={cat} className="custom-radio">
                             <input
                                 type="radio"

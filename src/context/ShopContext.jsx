@@ -64,12 +64,13 @@ const initialProducts = [
 
 export const ShopProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Listen for Realtime Database changes
     useEffect(() => {
         const productsRef = ref(database, 'products');
-        const unsubscribe = onValue(productsRef, (snapshot) => {
+        const unsubscribeProducts = onValue(productsRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 // Firebase stores it as an object dictionary if added with specific IDs
@@ -78,14 +79,31 @@ export const ShopProvider = ({ children }) => {
             } else {
                 setProducts([]);
             }
-            setLoading(false);
         }, (error) => {
             console.error("Error fetching products from Firebase:", error);
+        });
+
+        // Listen for Categories
+        const categoriesRef = ref(database, 'categories');
+        const unsubscribeCategories = onValue(categoriesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const categoryList = Object.values(data).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                setCategories(categoryList);
+            } else {
+                setCategories([]);
+            }
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching categories from Firebase:", error);
             setLoading(false);
         });
 
         // Cleanup listener on unmount
-        return () => unsubscribe();
+        return () => {
+            unsubscribeProducts();
+            unsubscribeCategories();
+        };
     }, []);
 
     const [wishlist, setWishlist] = useState(() => {
@@ -193,6 +211,27 @@ export const ShopProvider = ({ children }) => {
         }
     };
 
+    // Category Methods
+    const addCategory = async (categoryName) => {
+        try {
+            const id = Date.now().toString();
+            const newCategory = { id, name: categoryName, createdAt: Date.now() };
+            const categoryRef = ref(database, `categories/${id}`);
+            await set(categoryRef, newCategory);
+        } catch (error) {
+            console.error("Error adding category", error);
+        }
+    };
+
+    const deleteCategory = async (id) => {
+        try {
+            const categoryRef = ref(database, `categories/${id}`);
+            await remove(categoryRef);
+        } catch (error) {
+            console.error("Error deleting category", error);
+        }
+    };
+
     const loginAdmin = async (email, password) => {
         try {
             await signInWithEmailAndPassword(auth, email, password);
@@ -222,6 +261,7 @@ export const ShopProvider = ({ children }) => {
     return (
         <ShopContext.Provider value={{
             products,
+            categories,
             loading,
             authLoading,
             wishlist,
@@ -236,6 +276,8 @@ export const ShopProvider = ({ children }) => {
             addProduct,
             updateProduct,
             deleteProduct,
+            addCategory,
+            deleteCategory,
             loginAdmin,
             logoutAdmin
         }}>

@@ -5,9 +5,11 @@ import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut, L
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const { products, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
+    const { products, categories, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct, addCategory, deleteCategory } = useShop();
     const [isEditing, setIsEditing] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isManagingCategories, setIsManagingCategories] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
     const [currentProduct, setCurrentProduct] = useState(null);
 
     if (authLoading) {
@@ -100,6 +102,20 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleAddCategory = (e) => {
+        e.preventDefault();
+        if (newCategoryName.trim()) {
+            addCategory(newCategoryName.trim());
+            setNewCategoryName('');
+        }
+    };
+
+    const handleDeleteCategory = (id) => {
+        if (window.confirm('Are you sure you want to delete this category?')) {
+            deleteCategory(id);
+        }
+    };
+
     return (
         <div className="admin-dashboard container">
             <div className="admin-header">
@@ -146,9 +162,14 @@ const AdminDashboard = () => {
             <div className="products-manager">
                 <div className="manager-header">
                     <h2>Product Inventory</h2>
-                    <button className="btn-primary btn-add" onClick={openAddModal}>
-                        <Plus size={18} /> Add Product
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="btn-secondary btn-add" onClick={() => setIsManagingCategories(true)}>
+                            Manage Categories
+                        </button>
+                        <button className="btn-primary btn-add" onClick={openAddModal}>
+                            <Plus size={18} /> Add Product
+                        </button>
+                    </div>
                 </div>
 
                 <div className="table-responsive">
@@ -264,13 +285,10 @@ const AdminDashboard = () => {
                                 <div className="form-group">
                                     <label>Category</label>
                                     <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}>
-                                        <option value="Used Mobiles">Used Mobiles</option>
-                                        <option value="Back Covers">Back Covers</option>
-                                        <option value="Screen Guards">Screen Guards</option>
-                                        <option value="Smart Watches">Smart Watches</option>
-                                        <option value="AirPods">AirPods</option>
-                                        <option value="Fast Chargers">Fast Chargers</option>
-                                        <option value="Accessories">Accessories</option>
+                                        {categories.length === 0 && <option value="Accessories">Accessories</option>}
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -304,6 +322,48 @@ const AdminDashboard = () => {
                                 <button type="submit" className="btn-primary" disabled={isUploading}>Save Product</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage Categories Modal */}
+            {isManagingCategories && (
+                <div className="modal-overlay">
+                    <div className="modal-content glass" style={{ maxWidth: '500px' }}>
+                        <h2>Manage Categories</h2>
+
+                        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                            <input
+                                type="text"
+                                required
+                                value={newCategoryName}
+                                onChange={e => setNewCategoryName(e.target.value)}
+                                placeholder="New category name..."
+                                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-light)' }}
+                            />
+                            <button type="submit" className="btn-primary">Add</button>
+                        </form>
+
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {categories.length === 0 ? (
+                                <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No categories found.</p>
+                            ) : (
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                    {categories.map(cat => (
+                                        <li key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <span>{cat.name}</span>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} style={{ background: 'none', border: 'none', color: '#e74c3c', cursor: 'pointer', padding: '5px' }}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+
+                        <div className="form-actions" style={{ marginTop: '20px' }}>
+                            <button className="btn-secondary" onClick={() => setIsManagingCategories(false)} style={{ width: '100%' }}>Close</button>
+                        </div>
                     </div>
                 </div>
             )}
