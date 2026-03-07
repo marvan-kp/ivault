@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut } from 'lucide-react';
+import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut, Loader, UploadCloud } from 'lucide-react';
+import { storage } from '../config/firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { products, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
     const [isEditing, setIsEditing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
 
     if (authLoading) {
@@ -57,15 +60,48 @@ const AdminDashboard = () => {
         setIsEditing(true);
     };
 
-    const handleSaveProduct = (e) => {
+    const handleSaveProduct = async (e) => {
         e.preventDefault();
-        if (currentProduct.id) {
-            updateProduct(currentProduct);
-        } else {
-            addProduct(currentProduct);
+        setIsUploading(true);
+
+        try {
+            let processedMedia = [];
+            const timestamp = Date.now();
+
+            // Process each media item
+            for (let i = 0; i < (currentProduct.media || []).length; i++) {
+                const item = currentProduct.media[i];
+
+                // If it's a new file (data URL base64 string from our file input)
+                if (item.startsWith('data:')) {
+                    const storageRef = ref(storage, `products/${timestamp}_${i}`);
+
+                    // uploadString handles data URLs automatically
+                    await uploadString(storageRef, item, 'data_url');
+                    const downloadURL = await getDownloadURL(storageRef);
+                    processedMedia.push(downloadURL);
+                } else {
+                    // It's already an existing URL (e.g. from editing an old product)
+                    processedMedia.push(item);
+                }
+            }
+
+            const productToSave = { ...currentProduct, media: processedMedia, image: processedMedia[0] || '' };
+
+            if (currentProduct.id) {
+                await updateProduct(productToSave);
+            } else {
+                await addProduct(productToSave);
+            }
+
+            setIsEditing(false);
+            setCurrentProduct(null);
+        } catch (error) {
+            console.error("Error saving product: ", error);
+            alert("Failed to upload images and save product. Please try again.");
+        } finally {
+            setIsUploading(false);
         }
-        setIsEditing(false);
-        setCurrentProduct(null);
     };
 
     return (
@@ -308,8 +344,10 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="form-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Save Product</button>
+                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)} disabled={isUploading}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={isUploading}>
+                                    {isUploading ? <><Loader className="animate-spin" size={18} style={{ marginRight: '8px' }} /> Uploading...</> : 'Save Product'}
+                                </button>
                             </div>
                         </form>
                     </div>
