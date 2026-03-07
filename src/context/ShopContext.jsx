@@ -1,4 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { ref, onValue, set, remove, update } from 'firebase/database';
+import { database } from '../config/firebase';
 
 const ShopContext = createContext();
 
@@ -63,23 +65,26 @@ export const ShopProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch products from MongoDB Backend
+    // Listen for Realtime Database changes
     useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const response = await fetch('http://localhost:5000/api/products');
-                if (response.ok) {
-                    const data = await response.json();
-                    setProducts(data);
-                }
-            } catch (error) {
-                console.error("Error fetching products:", error);
-            } finally {
-                setLoading(false);
+        const productsRef = ref(database, 'products');
+        const unsubscribe = onValue(productsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // Firebase stores it as an object dictionary if added with specific IDs
+                const productList = Object.values(data).sort((a, b) => b.createdAt - a.createdAt);
+                setProducts(productList);
+            } else {
+                setProducts([]);
             }
-        };
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching products from Firebase:", error);
+            setLoading(false);
+        });
 
-        fetchProducts();
+        // Cleanup listener on unmount
+        return () => unsubscribe();
     }, []);
 
     const [wishlist, setWishlist] = useState(() => {
@@ -111,22 +116,10 @@ export const ShopProvider = ({ children }) => {
 
     const addProduct = async (product) => {
         try {
-            const tempId = Date.now();
-            const optimisticProduct = { ...product, id: tempId };
-            setProducts(prev => [optimisticProduct, ...prev]);
-
-            const response = await fetch('http://localhost:5000/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(product)
-            });
-
-            if (response.ok) {
-                const savedProduct = await response.json();
-                setProducts(prev => prev.map(p => p.id === tempId ? savedProduct : p));
-            } else {
-                setProducts(prev => prev.filter(p => p.id !== tempId)); // revert on error
-            }
+            const id = Date.now();
+            const newProduct = { ...product, id, createdAt: id };
+            const productRef = ref(database, `products/${id}`);
+            await set(productRef, newProduct);
         } catch (error) {
             console.error("Error adding product", error);
         }
@@ -134,13 +127,8 @@ export const ShopProvider = ({ children }) => {
 
     const updateProduct = async (updated) => {
         try {
-            setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
-
-            await fetch(`http://localhost:5000/api/products/${updated.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updated)
-            });
+            const productRef = ref(database, `products/${updated.id}`);
+            await update(productRef, updated);
         } catch (error) {
             console.error("Error updating product", error);
         }
@@ -148,8 +136,8 @@ export const ShopProvider = ({ children }) => {
 
     const deleteProduct = async (id) => {
         try {
-            setProducts(prev => prev.filter(p => p.id !== id));
-            await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
+            const productRef = ref(database, `products/${id}`);
+            await remove(productRef);
         } catch (error) {
             console.error("Error deleting product", error);
         }
