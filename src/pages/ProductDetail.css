@@ -230,6 +230,9 @@
 }
 
 .detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 40px;
 }
 
@@ -242,14 +245,11 @@
     height: 60px;
     font-size: 1.2rem;
     padding: 0;
-    background: #25D366;
-    /* WhatsApp Green */
-    color: white;
+    font-weight: 600;
 }
 
 .btn-buy-large:hover {
-    background: #1EBE5D;
-    box-shadow: 0 0 20px rgba(37, 211, 102, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-buy-large.disabled {
