@@ -247,7 +247,7 @@ const AdminDashboard = () => {
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                                     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span>Image URL</span>
-                                        <label style={{ cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: isUploading ? 'var(--text-muted)' : 'var(--color-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
+                                        <label style={{ cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#c9a227', color: '#1a1a1a', padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, opacity: isUploading ? 0.7 : 1, transition: 'all 0.2s' }}>
                                             {isUploading ? <Loader size={16} className="animate-spin" /> : <UploadCloud size={16} />}
                                             {isUploading ? 'Uploading...' : 'Upload Image'}
                                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isUploading} />
