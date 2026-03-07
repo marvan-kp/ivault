@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut } from 'lucide-react';
+import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut, Loader, UploadCloud } from 'lucide-react';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { products, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
     const [isEditing, setIsEditing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
 
     if (authLoading) {
@@ -68,6 +69,35 @@ const AdminDashboard = () => {
 
         setIsEditing(false);
         setCurrentProduct(null);
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('key', '22de4c0b5ce77df60783fa9760dedfac'); // Free tier API key
+
+        try {
+            const response = await fetch('https://api.imgbb.com/1/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (data.success) {
+                setCurrentProduct(prev => ({ ...prev, image: data.data.url }));
+            } else {
+                alert('Image upload failed: ' + (data.error?.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Error uploading image. Please check your connection.');
+        } finally {
+            setIsUploading(false);
+            e.target.value = ''; // Reset input
+        }
     };
 
     return (
@@ -215,8 +245,15 @@ const AdminDashboard = () => {
                                     <input type="text" required value={currentProduct.name} onChange={e => setCurrentProduct({ ...currentProduct, name: e.target.value })} />
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                                    <label>Image URL</label>
-                                    <input type="url" required value={currentProduct.image} onChange={e => setCurrentProduct({ ...currentProduct, image: e.target.value })} placeholder="https://example.com/image.jpg" />
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>Image URL</span>
+                                        <label style={{ cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: isUploading ? 'var(--text-muted)' : 'var(--color-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
+                                            {isUploading ? <Loader size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                                            {isUploading ? 'Uploading...' : 'Upload Image'}
+                                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isUploading} />
+                                        </label>
+                                    </label>
+                                    <input type="url" required value={currentProduct.image} onChange={e => setCurrentProduct({ ...currentProduct, image: e.target.value })} placeholder="https://example.com/image.jpg" disabled={isUploading} />
                                     {currentProduct.image && (
                                         <img src={currentProduct.image} alt="Preview" style={{ marginTop: '10px', height: '100px', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
                                     )}
@@ -263,8 +300,8 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="form-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Save Product</button>
+                                <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)} disabled={isUploading}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={isUploading}>Save Product</button>
                             </div>
                         </form>
                     </div>
