@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, Instagram, Phone, Menu, X } from 'lucide-react';
+import { Search, Heart, Instagram, Phone, Menu, X, ShoppingBag } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
+import CartDrawer from './CartDrawer';
 import './Navbar.css';
 
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const { cart } = useShop();
     const navigate = useNavigate();
 
     const handleSearch = (e) => {
@@ -58,14 +62,17 @@ const Navbar = () => {
                     <Link to="/wishlist" className="action-icon" aria-label="Wishlist">
                         <Heart size={20} />
                     </Link>
+                    <button className="action-icon cart-icon-btn" onClick={() => setIsCartOpen(true)} aria-label="Cart">
+                        <ShoppingBag size={20} />
+                        {cart.length > 0 && <span className="cart-badge">{cart.reduce((total, item) => total + item.quantity, 0)}</span>}
+                    </button>
                     <a href="https://instagram.com/ivault._" target="_blank" rel="noreferrer" className="action-icon" aria-label="Instagram">
                         <Instagram size={20} />
                     </a>
-                    <a href="https://wa.me/917907443251" target="_blank" rel="noreferrer" className="action-icon" aria-label="WhatsApp">
-                        <Phone size={20} />
-                    </a>
                 </div>
             </div>
+
+            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </nav>
     );
 };

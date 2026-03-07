@@ -93,6 +93,11 @@ export const ShopProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
+    const [cart, setCart] = useState(() => {
+        const saved = localStorage.getItem('ivault_cart');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const [isAdmin, setIsAdmin] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
@@ -109,6 +114,10 @@ export const ShopProvider = ({ children }) => {
         localStorage.setItem('ivault_wishlist', JSON.stringify(wishlist));
     }, [wishlist]);
 
+    useEffect(() => {
+        localStorage.setItem('ivault_cart', JSON.stringify(cart));
+    }, [cart]);
+
     const toggleWishlist = (product) => {
         setWishlist(prev => {
             const exists = prev.find(item => item.id === product.id);
@@ -123,6 +132,38 @@ export const ShopProvider = ({ children }) => {
         return wishlist.some(item => item.id === productId);
     };
 
+    // Cart Methods
+    const addToCart = (product) => {
+        setCart(prev => {
+            const existing = prev.find(item => item.id === product.id);
+            if (existing) {
+                return prev.map(item =>
+                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                );
+            }
+            return [...prev, { ...product, quantity: 1 }];
+        });
+    };
+
+    const removeFromCart = (productId) => {
+        setCart(prev => prev.filter(item => item.id !== productId));
+    };
+
+    const updateQuantity = (productId, amount) => {
+        setCart(prev => prev.map(item => {
+            if (item.id === productId) {
+                const newQuantity = Math.max(1, item.quantity + amount);
+                return { ...item, quantity: newQuantity };
+            }
+            return item;
+        }));
+    };
+
+    const clearCart = () => {
+        setCart([]);
+    };
+
+    // General Products Methods
     const addProduct = async (product) => {
         try {
             const id = Date.now();
@@ -184,9 +225,14 @@ export const ShopProvider = ({ children }) => {
             loading,
             authLoading,
             wishlist,
+            cart,
             isAdmin,
             toggleWishlist,
             isWishlisted,
+            addToCart,
+            removeFromCart,
+            updateQuantity,
+            clearCart,
             addProduct,
             updateProduct,
             deleteProduct,

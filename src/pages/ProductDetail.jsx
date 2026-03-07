@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { ArrowLeft, MessageCircle, Heart, ShieldCheck, Truck, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Heart, ShieldCheck, Truck, RefreshCcw, ShoppingBag } from 'lucide-react';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [activeMediaIndex, setActiveMediaIndex] = useState(0);
-    const { products, toggleWishlist, isWishlisted } = useShop();
+    const { products, toggleWishlist, isWishlisted, addToCart } = useShop();
 
     const product = products.find(p => p.id === parseInt(id));
 
@@ -166,15 +166,29 @@ const ProductDetail = () => {
                     </div>
 
                     <div className="detail-actions">
+                        <button
+                            className={`btn-primary btn-buy-large ${stock === 0 ? 'disabled' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (stock > 0) addToCart(product);
+                            }}
+                            disabled={stock === 0}
+                            style={{ flex: 1 }}
+                        >
+                            <ShoppingBag size={24} />
+                            <span>{stock === 0 ? 'Out of Stock' : 'Add to Cart'}</span>
+                        </button>
+
                         <a
                             href={stock > 0 ? generateWhatsAppLink() : '#'}
                             target={stock > 0 ? "_blank" : "_self"}
                             rel="noreferrer"
-                            className={`btn-primary btn-buy-large ${stock === 0 ? 'disabled' : ''}`}
+                            className={`btn-secondary btn-whatsapp ${stock === 0 ? 'disabled' : ''}`}
                             onClick={(e) => stock === 0 && e.preventDefault()}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', background: '#25D366', color: 'white', borderColor: '#25D366' }}
                         >
                             <MessageCircle size={24} />
-                            <span>{stock === 0 ? 'Out of Stock' : 'Buy on WhatsApp'}</span>
+                            <span>Buy on WhatsApp</span>
                         </a>
                     </div>
 

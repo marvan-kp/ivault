@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Heart, Eye, MessageCircle } from 'lucide-react';
+import { Heart, Eye, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useShop } from '../context/ShopContext';
 import './ProductCard.css';
 
 const ProductCard = ({ product, toggleWishlist, isWishlisted }) => {
+    const { addToCart } = useShop();
     const {
         id,
         name,
@@ -20,11 +22,6 @@ const ProductCard = ({ product, toggleWishlist, isWishlisted }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     const discountPercentage = Math.round(((mrp - discountPrice) / mrp) * 100);
-
-    const generateWhatsAppLink = () => {
-        const message = `Hello iVault Accessories, I want to buy this product.\n\nProduct Name: ${name}\nPrice: ₹${discountPrice}\n\nIs this product available?`;
-        return `https://wa.me/917907443251?text=${encodeURIComponent(message)}`;
-    };
 
     const getStockBadge = () => {
         if (stock === 0) return <span className="badge badge-error">Out of Stock</span>;
@@ -108,16 +105,17 @@ const ProductCard = ({ product, toggleWishlist, isWishlisted }) => {
                     <Link to={`/product/${id}`} className="btn-icon btn-view">
                         <Eye size={18} />
                     </Link>
-                    <a filter="button"
-                        href={stock > 0 ? generateWhatsAppLink() : '#'}
-                        target={stock > 0 ? "_blank" : "_self"}
-                        rel="noreferrer"
+                    <button
                         className={`btn-primary btn-buy ${stock === 0 ? 'disabled' : ''}`}
-                        onClick={(e) => stock === 0 && e.preventDefault()}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (stock > 0) addToCart(product);
+                        }}
+                        disabled={stock === 0}
                     >
-                        <MessageCircle size={18} />
-                        <span>Buy Now</span>
-                    </a>
+                        <ShoppingBag size={18} />
+                        <span>Add to Cart</span>
+                    </button>
                 </div>
             </div>
         </div>
