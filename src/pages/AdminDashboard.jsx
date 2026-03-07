@@ -45,6 +45,7 @@ const AdminDashboard = () => {
             brand: '',
             category: 'Accessories',
             image: '',
+            media: [],
             mrp: 0,
             discountPrice: 0,
             stock: 0,
@@ -56,17 +57,25 @@ const AdminDashboard = () => {
     };
 
     const openEditModal = (product) => {
-        setCurrentProduct({ ...product });
+        // Ensure legacy products get a media array populated using their image
+        const media = product.media && product.media.length > 0 ? [...product.media] : (product.image ? [product.image] : []);
+        setCurrentProduct({ ...product, media });
         setIsEditing(true);
     };
 
     const handleSaveProduct = (e) => {
         e.preventDefault();
 
-        if (currentProduct.id) {
-            updateProduct(currentProduct);
+        // Sync first media item as backward-compatible primary image
+        const productToSave = { ...currentProduct };
+        if (productToSave.media && productToSave.media.length > 0) {
+            productToSave.image = productToSave.media[0];
+        }
+
+        if (productToSave.id) {
+            updateProduct(productToSave);
         } else {
-            addProduct(currentProduct);
+            addProduct(productToSave);
         }
 
         setIsEditing(false);
@@ -89,7 +98,12 @@ const AdminDashboard = () => {
             });
             const data = await response.json();
             if (data.success) {
-                setCurrentProduct(prev => ({ ...prev, image: data.data.url }));
+                const newUrl = data.data.url;
+                setCurrentProduct(prev => ({
+                    ...prev,
+                    image: prev.media?.length === 0 ? newUrl : prev.image,
+                    media: [...(prev.media || []), newUrl]
+                }));
             } else {
                 alert('Image upload failed: ' + (data.error?.message || 'Unknown error'));
             }
@@ -100,6 +114,26 @@ const AdminDashboard = () => {
             setIsUploading(false);
             e.target.value = ''; // Reset input
         }
+    };
+
+    const handleRemoveMedia = (indexToRemove) => {
+        setCurrentProduct(prev => {
+            const newMedia = prev.media.filter((_, idx) => idx !== indexToRemove);
+            return {
+                ...prev,
+                media: newMedia,
+                image: newMedia.length > 0 ? newMedia[0] : ''
+            };
+        });
+    };
+
+    const handleAddImageURL = (url) => {
+        if (!url.trim()) return;
+        setCurrentProduct(prev => ({
+            ...prev,
+            image: prev.media?.length === 0 ? url : prev.image,
+            media: [...(prev.media || []), url]
+        }));
     };
 
     const handleAddCategory = (e) => {
@@ -267,16 +301,52 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                                     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span>Image URL</span>
+                                        <span>Product Images ({currentProduct.media?.length || 0})</span>
                                         <label style={{ cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#c9a227', color: '#1a1a1a', padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, opacity: isUploading ? 0.7 : 1, transition: 'all 0.2s' }}>
                                             {isUploading ? <Loader size={16} className="animate-spin" /> : <UploadCloud size={16} />}
                                             {isUploading ? 'Uploading...' : 'Upload Image'}
                                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={isUploading} />
                                         </label>
                                     </label>
-                                    <input type="url" required value={currentProduct.image} onChange={e => setCurrentProduct({ ...currentProduct, image: e.target.value })} placeholder="https://example.com/image.jpg" disabled={isUploading} />
-                                    {currentProduct.image && (
-                                        <img src={currentProduct.image} alt="Preview" style={{ marginTop: '10px', height: '100px', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
+
+                                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                        <input
+                                            type="url"
+                                            id="manual-url-input"
+                                            placeholder="Or paste an image URL here..."
+                                            disabled={isUploading}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn-secondary"
+                                            onClick={(e) => {
+                                                const input = document.getElementById('manual-url-input');
+                                                handleAddImageURL(input.value);
+                                                input.value = '';
+                                            }}
+                                        >
+                                            Add URL
+                                        </button>
+                                    </div>
+
+                                    {currentProduct.media && currentProduct.media.length > 0 && (
+                                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)' }}>
+                                            {currentProduct.media.map((url, idx) => (
+                                                <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: idx === 0 ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.2)' }}>
+                                                    <img src={url} alt={`Preview ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveMedia(idx)}
+                                                        style={{ position: 'absolute', top: '2px', right: '2px', background: 'var(--color-danger)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px', padding: 0 }}
+                                                        title="Remove Image"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {currentProduct.media.length > 0 && <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '100%', display: 'block', marginTop: '5px' }}>* The first image (highlighted in gold) will be the primary display image.</span>}
+                                        </div>
                                     )}
                                 </div>
                             </div>
