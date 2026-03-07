@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { ref, onValue, set, remove, update } from 'firebase/database';
-import { database } from '../config/firebase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { database, auth } from '../config/firebase';
 
 const ShopContext = createContext();
 
@@ -92,9 +93,17 @@ export const ShopProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [isAdmin, setIsAdmin] = useState(() => {
-        return localStorage.getItem('ivault_admin') === 'true';
-    });
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    // Listen to Firebase Auth state
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setIsAdmin(!!user);
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('ivault_wishlist', JSON.stringify(wishlist));
@@ -143,24 +152,37 @@ export const ShopProvider = ({ children }) => {
         }
     };
 
-    const loginAdmin = (username, password) => {
-        if (username === 'ivault@nazim' && password === 'IIvv@#2026') {
-            setIsAdmin(true);
-            localStorage.setItem('ivault_admin', 'true');
-            return true;
+    const loginAdmin = async (email, password) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            return { success: true };
+        } catch (error) {
+            console.error("Login failed:", error);
+            let message = "Invalid email or password.";
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                message = "Invalid email or password.";
+            } else if (error.code === 'auth/invalid-email') {
+                message = "Invalid email format.";
+            } else if (error.code === 'auth/too-many-requests') {
+                message = "Too many attempts. Try again later.";
+            }
+            return { success: false, message };
         }
-        return false;
     };
 
-    const logoutAdmin = () => {
-        setIsAdmin(false);
-        localStorage.removeItem('ivault_admin');
+    const logoutAdmin = async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     return (
         <ShopContext.Provider value={{
             products,
             loading,
+            authLoading,
             wishlist,
             isAdmin,
             toggleWishlist,

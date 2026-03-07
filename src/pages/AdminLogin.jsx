@@ -5,19 +5,24 @@ import { Lock } from 'lucide-react';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const { loginAdmin } = useShop();
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (loginAdmin(username, password)) {
+        setError('');
+        setLoading(true);
+        const res = await loginAdmin(email, password);
+        if (res?.success) {
             navigate('/admin/dashboard');
         } else {
-            setError('Invalid username or password (use ivault@nazim / IIvv@#2026)');
+            setError(res?.message || 'Login failed.');
         }
+        setLoading(false);
     };
 
     return (
@@ -33,13 +38,13 @@ const AdminLogin = () => {
 
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="email">Admin Email</label>
                         <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Enter admin username"
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter admin email address"
                             required
                         />
                     </div>
@@ -56,7 +61,9 @@ const AdminLogin = () => {
                         />
                     </div>
 
-                    <button type="submit" className="btn-primary w-100">Login to Dashboard</button>
+                    <button type="submit" className="btn-primary w-100" disabled={loading}>
+                        {loading ? 'Authenticating...' : 'Login to Dashboard'}
+                    </button>
                 </form>
 
 

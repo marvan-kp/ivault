@@ -5,9 +5,13 @@ import { Package, TrendingUp, Zap, AlertTriangle, Plus, Edit2, Trash2, LogOut } 
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const { products, isAdmin, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
+    const { products, isAdmin, authLoading, logoutAdmin, deleteProduct, updateProduct, addProduct } = useShop();
     const [isEditing, setIsEditing] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
+
+    if (authLoading) {
+        return <div className="admin-dashboard container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}><h2>Loading Admin Details...</h2></div>;
+    }
 
     if (!isAdmin) {
         return <Navigate to="/admin" />;
