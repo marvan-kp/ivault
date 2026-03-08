@@ -85,6 +85,155 @@ section {
     gap: 20px;
 }
 
+/* Dynamic Hero Section */
+.dynamic-hero-section {
+    position: relative;
+    width: calc(100% - 40px);
+    /* Margin on sides */
+    max-width: 1400px;
+    /* Constrain on ultra-wides */
+    margin: 84px auto 40px auto;
+    /* Centered with top/bottom margin */
+    padding: 0;
+    /* Override default section padding */
+    height: 31vw;
+    /* Proportional height */
+    min-height: 180px;
+    /* Protect mobile size */
+    max-height: 430px;
+    /* Higher max to fill wide screens elegantly */
+    overflow: hidden;
+    background: var(--color-secondary, #111);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .dynamic-hero-section {
+        width: calc(100% - 24px);
+        /* Smaller side margins on phone */
+        margin-top: 76px;
+        height: 48vw;
+        /* Taller on mobile for better proportion like Flipkart */
+        border-radius: var(--radius-md, 12px);
+    }
+}
+
+.banner-slider {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.banner-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    position: relative;
+    background-size: cover;
+    /* Covers without subpixel gaps due to exact 13:4 cropping */
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+.dynamic-banner-content {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    transform: translateY(-50%);
+    align-items: flex-start;
+    text-align: left;
+    max-width: 600px;
+}
+
+.dynamic-banner-content .hero-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    /* Slightly smaller max size */
+    margin-bottom: 12px;
+    background: none;
+    -webkit-text-fill-color: initial;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.dynamic-banner-content .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-bottom: 24px;
+}
+
+.banner-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.banner-dot {
+    width: 12px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.banner-dot.active {
+    background: var(--color-accent);
+    width: 24px;
+}
+
+.banner-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+}
+
+.dynamic-hero-section:hover .banner-nav-btn {
+    opacity: 1;
+}
+
+.banner-nav-btn:hover {
+    background: var(--color-accent);
+    color: var(--bg-dark);
+    border-color: var(--color-accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.banner-nav-btn.prev {
+    left: 20px;
+}
+
+.banner-nav-btn.next {
+    right: 20px;
+}
+
 /* Categories Section */
 .categories-grid {
     display: grid;
@@ -116,6 +265,17 @@ section {
     font-size: 2.5rem;
     margin-bottom: 16px;
     transition: transform var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+}
+
+.category-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .category-card:hover .category-icon {
@@ -279,14 +439,49 @@ a[href*="elfsight.com"],
 
 @media (max-width: 768px) {
     .hero-actions {
-        flex-direction: column;
-        width: 100%;
-        max-width: 300px;
+        flex-direction: row;
+        width: auto;
     }
 
     .hero-actions a {
-        width: 100%;
-        text-align: center;
+        width: auto;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .dynamic-banner-content {
+        left: 8%;
+        right: auto;
+        text-align: left;
+        align-items: flex-start;
+        max-width: 85%;
+    }
+
+    .dynamic-banner-content .hero-title {
+        font-size: clamp(1.5rem, 6vw, 2.2rem);
+        margin-bottom: 8px;
+    }
+
+    .dynamic-banner-content .hero-subtitle {
+        font-size: clamp(0.85rem, 3.5vw, 1rem);
+        margin-bottom: 16px;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    .banner-nav-btn {
+        width: 36px;
+        height: 36px;
+        opacity: 1;
+        /* Always show arrows on mobile */
+    }
+
+    .banner-nav-btn.prev {
+        left: 10px;
+    }
+
+    .banner-nav-btn.next {
+        right: 10px;
     }
 
     .deals-header {

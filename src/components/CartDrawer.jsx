@@ -17,11 +17,21 @@ const CartDrawer = ({ isOpen, onClose }) => {
         const subtotal = calculateSubtotal();
         if (!appliedPromo) return subtotal;
 
+        let eligibleSubtotal = subtotal;
+        const promoCategories = appliedPromo.categories || [appliedPromo.category || 'All Categories'];
+
+        if (!promoCategories.includes('All Categories')) {
+            eligibleSubtotal = cart
+                .filter(item => promoCategories.includes(item.category))
+                .reduce((total, item) => total + (item.discountPrice * item.quantity), 0);
+        }
+
         if (appliedPromo.discountType === 'percentage') {
-            const discountAmount = subtotal * (appliedPromo.discountValue / 100);
+            const discountAmount = eligibleSubtotal * (appliedPromo.discountValue / 100);
             return Math.max(0, subtotal - discountAmount);
         } else {
-            return Math.max(0, subtotal - appliedPromo.discountValue);
+            const discountAmount = Math.min(eligibleSubtotal, appliedPromo.discountValue);
+            return Math.max(0, subtotal - discountAmount);
         }
     };
 
@@ -37,6 +47,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
         } else if (!promo.isActive) {
             setPromoError('This promo code is no longer active.');
         } else {
+            const promoCategories = promo.categories || [promo.category || 'All Categories'];
+
+            if (!promoCategories.includes('All Categories')) {
+                const hasEligibleItem = cart.some(item => promoCategories.includes(item.category));
+                if (!hasEligibleItem) {
+                    setPromoError(`This promo code is only valid for: ${promoCategories.join(', ')}.`);
+                    return;
+                }
+            }
             setAppliedPromo(promo);
             setPromoInput('');
         }
@@ -62,7 +81,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
         if (appliedPromo) {
             message += `*Subtotal: ₹${subtotal.toLocaleString()}*\n`;
-            message += `*Promo Code Applied:* ${appliedPromo.code} (-${appliedPromo.discountType === 'percentage' ? appliedPromo.discountValue + '%' : '₹' + appliedPromo.discountValue})\n`;
+            message += `*Promo Code Applied:* ${appliedPromo.code} (-₹${(subtotal - total).toLocaleString()})\n`;
         }
 
         message += `*Final Amount: ₹${total.toLocaleString()}*\n\n`;

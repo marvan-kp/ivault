@@ -66,6 +66,7 @@ export const ShopProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [promoCodes, setPromoCodes] = useState([]);
+    const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Listen for Realtime Database changes
@@ -114,11 +115,26 @@ export const ShopProvider = ({ children }) => {
             console.error("Error fetching promo codes from Firebase:", error);
         });
 
+        // Listen for Banners
+        const bannersRef = ref(database, 'banners');
+        const unsubscribeBanners = onValue(bannersRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const bannersList = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                setBanners(bannersList);
+            } else {
+                setBanners([]);
+            }
+        }, (error) => {
+            console.error("Error fetching banners from Firebase:", error);
+        });
+
         // Cleanup listener on unmount
         return () => {
             unsubscribeProducts();
             unsubscribeCategories();
             unsubscribePromoCodes();
+            unsubscribeBanners();
         };
     }, []);
 
@@ -228,10 +244,10 @@ export const ShopProvider = ({ children }) => {
     };
 
     // Category Methods
-    const addCategory = async (categoryName) => {
+    const addCategory = async (categoryName, iconStr = '📦') => {
         try {
             const id = Date.now().toString();
-            const newCategory = { id, name: categoryName, createdAt: Date.now() };
+            const newCategory = { id, name: categoryName, icon: iconStr, showOnHome: true, createdAt: Date.now() };
             const categoryRef = ref(database, `categories/${id}`);
             await set(categoryRef, newCategory);
         } catch (error) {
@@ -245,6 +261,16 @@ export const ShopProvider = ({ children }) => {
             await remove(categoryRef);
         } catch (error) {
             console.error("Error deleting category", error);
+        }
+    };
+
+    const toggleCategoryHomeStatus = async (id, currentStatus) => {
+        try {
+            const categoryRef = ref(database, `categories/${id}`);
+            // If currentStatus is undefined (old category), we assume it was true, so passing false.
+            await update(categoryRef, { showOnHome: currentStatus === false ? true : false });
+        } catch (error) {
+            console.error("Error updating category home status", error);
         }
     };
 
@@ -278,6 +304,47 @@ export const ShopProvider = ({ children }) => {
             await remove(promoRef);
         } catch (error) {
             console.error("Error deleting promo code", error);
+        }
+    };
+
+    // Banner Methods
+    const addBanner = async (bannerData) => {
+        try {
+            const id = Date.now().toString();
+            const newBanner = { ...bannerData, id, createdAt: Date.now() };
+            const bannerRef = ref(database, `banners/${id}`);
+            await set(bannerRef, newBanner);
+            return { success: true };
+        } catch (error) {
+            console.error("Error adding banner:", error);
+            return { success: false, message: error.message };
+        }
+    };
+
+    const updateBanner = async (updatedBanner) => {
+        try {
+            const bannerRef = ref(database, `banners/${updatedBanner.id}`);
+            await update(bannerRef, updatedBanner);
+        } catch (error) {
+            console.error("Error updating banner:", error);
+        }
+    };
+
+    const toggleBannerStatus = async (id, currentStatus) => {
+        try {
+            const bannerRef = ref(database, `banners/${id}`);
+            await update(bannerRef, { isActive: !currentStatus });
+        } catch (error) {
+            console.error("Error toggling banner status:", error);
+        }
+    };
+
+    const deleteBanner = async (id) => {
+        try {
+            const bannerRef = ref(database, `banners/${id}`);
+            await remove(bannerRef);
+        } catch (error) {
+            console.error("Error deleting banner:", error);
         }
     };
 
@@ -328,9 +395,15 @@ export const ShopProvider = ({ children }) => {
             deleteProduct,
             addCategory,
             deleteCategory,
+            toggleCategoryHomeStatus,
             addPromoCode,
             togglePromoCodeStatus,
             deletePromoCode,
+            banners,
+            addBanner,
+            updateBanner,
+            deleteBanner,
+            toggleBannerStatus,
             loginAdmin,
             logoutAdmin
         }}>

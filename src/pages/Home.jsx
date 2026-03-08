@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import ProductCard from '../components/ProductCard';
 import './Home.css';
 
-const CATEGORIES = [
-    { name: 'Used Mobiles', icon: '📱' },
-    { name: 'Back Covers', icon: '🛡️' },
-    { name: 'Screen Guards', icon: '✨' },
-    { name: 'Smart Watches', icon: '⌚' },
-    { name: 'AirPods', icon: '🎧' },
-    { name: 'Fast Chargers', icon: '⚡' },
-];
-
 const Home = () => {
-    const { products, toggleWishlist, isWishlisted } = useShop();
+    const { products, banners, categories, toggleWishlist, isWishlisted } = useShop();
     const [timeLeft, setTimeLeft] = useState(3600 * 5); // 5 hours countdown for demo
+    const [currentBanner, setCurrentBanner] = useState(0);
+
+    const activeBanners = banners.filter(b => b.isActive);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -23,6 +18,23 @@ const Home = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, []);
+
+    // Autoplay banner carousel
+    useEffect(() => {
+        if (activeBanners.length <= 1) return;
+        const bannerTimer = setInterval(() => {
+            setCurrentBanner(prev => (prev + 1) % activeBanners.length);
+        }, 5000); // Change banner every 5 seconds
+        return () => clearInterval(bannerTimer);
+    }, [activeBanners.length, currentBanner]); // Added currentBanner to dependency so manual clicks reset timer
+
+    const nextBanner = () => {
+        setCurrentBanner(prev => (prev + 1) % activeBanners.length);
+    };
+
+    const prevBanner = () => {
+        setCurrentBanner(prev => (prev - 1 + activeBanners.length) % activeBanners.length);
+    };
 
     const formatTime = (seconds) => {
         const h = Math.floor(seconds / 3600);
@@ -36,31 +48,82 @@ const Home = () => {
 
     return (
         <div className="home-page">
-            {/* Hero Section */}
-            <section className="hero-section">
-                <div className="hero-bg-gradient"></div>
-                <div className="container hero-container">
-                    <h1 className="hero-title">iVault Accessories</h1>
-                    <p className="hero-subtitle">Premium Accessories & Tech Essentials</p>
-                    <div className="hero-actions">
-                        <Link to="/products" className="btn-primary">Browse Products</Link>
-                        <Link to="/trending" className="btn-secondary">View Trending</Link>
+            {/* Hero / Banner Section */}
+            {activeBanners.length > 0 ? (
+                <section className="dynamic-hero-section">
+                    <div className="banner-slider" style={{ transform: `translateX(-${currentBanner * 100}%)` }}>
+                        {activeBanners.map((banner, index) => (
+                            <div className="banner-slide" key={banner.id} style={{ backgroundImage: `url(${banner.image})` }}>
+                                <div className="banner-overlay"></div>
+                                <div className="container hero-container dynamic-banner-content">
+                                    {banner.title && <h1 className="hero-title">{banner.title}</h1>}
+                                    {banner.subtitle && <p className="hero-subtitle">{banner.subtitle}</p>}
+                                    {banner.buttonText && banner.buttonLink && (
+                                        <div className="hero-actions">
+                                            <Link to={banner.buttonLink} className="btn-primary">{banner.buttonText}</Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    {/* Floating animations handled in CSS */}
-                </div>
-            </section>
+
+                    {activeBanners.length > 1 && (
+                        <>
+                            <button className="banner-nav-btn prev" onClick={prevBanner} aria-label="Previous Banner">
+                                <ChevronLeft size={28} />
+                            </button>
+                            <button className="banner-nav-btn next" onClick={nextBanner} aria-label="Next Banner">
+                                <ChevronRight size={28} />
+                            </button>
+
+                            <div className="banner-dots">
+                                {activeBanners.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        className={`banner-dot ${idx === currentBanner ? 'active' : ''}`}
+                                        onClick={() => setCurrentBanner(idx)}
+                                        aria-label={`Go to slide ${idx + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </section>
+            ) : (
+                <section className="hero-section">
+                    <div className="hero-bg-gradient"></div>
+                    <div className="container hero-container">
+                        <h1 className="hero-title">iVault Accessories</h1>
+                        <p className="hero-subtitle">Premium Accessories & Tech Essentials</p>
+                        <div className="hero-actions">
+                            <Link to="/products" className="btn-primary">Browse Products</Link>
+                            <Link to="/trending" className="btn-secondary">View Trending</Link>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Categories Section */}
             <section className="categories-section">
                 <div className="container">
                     <h2 className="section-title">Shop by Category</h2>
                     <div className="categories-grid">
-                        {CATEGORIES.map(cat => (
-                            <Link to={`/categories?filter=${cat.name}`} key={cat.name} className="category-card">
-                                <span className="category-icon">{cat.icon}</span>
+                        {categories.filter(cat => cat.showOnHome !== false).map(cat => (
+                            <Link to={`/categories?filter=${cat.name}`} key={cat.id} className="category-card">
+                                <span className="category-icon">
+                                    {cat.icon && cat.icon.startsWith('http') ? (
+                                        <img src={cat.icon} alt={cat.name} loading="lazy" />
+                                    ) : (
+                                        cat.icon || '📦'
+                                    )}
+                                </span>
                                 <span className="category-name">{cat.name}</span>
                             </Link>
                         ))}
+                        {categories.filter(cat => cat.showOnHome !== false).length === 0 && (
+                            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)' }}>No categories selected for home page.</p>
+                        )}
                     </div>
                 </div>
             </section>
