@@ -1,16 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Phone } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
 import './Footer.css';
 
 const Footer = () => {
+    const { categories } = useShop();
+
     return (
         <footer className="footer">
             <div className="container footer-container">
                 <div className="footer-brand">
-                    <Link to="/" className="footer-logo" style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', marginBottom: '8px' }}>
-                        <img src="/logo.png" alt="iVault Accessories" style={{ height: '200px', objectFit: 'contain', margin: '-50px 0', transform: 'scale(1.2)' }} />
-                        <span className="logo-text" style={{ color: '#C9A227', fontSize: '1.5rem', fontWeight: '700', letterSpacing: '1px' }}>iVault <span style={{ color: '#fff', fontWeight: '400', fontSize: '1.2rem' }}>Accessories</span></span>
+                    <Link to="/" className="footer-logo">
+                        <img src="/logo.png" alt="iVault Accessories" className="footer-logo-img" />
+                        <span className="logo-text">iVault <span>Accessories</span></span>
                     </Link>
                     <p className="footer-tagline">Premium Accessories & Tech Essentials</p>
                     <div className="footer-socials">
@@ -36,10 +39,17 @@ const Footer = () => {
                 <div className="footer-links-group">
                     <h4>Categories</h4>
                     <ul>
-                        <li><Link to="/categories?filter=Used Mobiles">Used Mobiles</Link></li>
-                        <li><Link to="/categories?filter=Back Covers">Back Covers</Link></li>
-                        <li><Link to="/categories?filter=Smart Watches">Smart Watches</Link></li>
-                        <li><Link to="/categories?filter=AirPods">AirPods</Link></li>
+                        {categories && categories.length > 0 ? (
+                            categories.slice(0, 5).map((category, index) => (
+                                <li key={index}>
+                                    <Link to={`/categories?filter=${encodeURIComponent(category.name)}`}>
+                                        {category.name}
+                                    </Link>
+                                </li>
+                            ))
+                        ) : (
+                            <li><Link to="/products">All Categories</Link></li>
+                        )}
                     </ul>
                 </div>
             </div>
