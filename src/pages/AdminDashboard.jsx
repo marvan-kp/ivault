@@ -70,7 +70,8 @@ const AdminDashboard = () => {
             stock: 0,
             description: '',
             isTrending: false,
-            isFlashDeal: false
+            isFlashDeal: false,
+            specifications: []
         });
         setIsEditing(true);
     };
@@ -78,7 +79,9 @@ const AdminDashboard = () => {
     const openEditModal = (product) => {
         // Ensure legacy products get a media array populated using their image
         const media = product.media && product.media.length > 0 ? [...product.media] : (product.image ? [product.image] : []);
-        setCurrentProduct({ ...product, media });
+        // Ensure legacy products have a specifications array
+        const specifications = product.specifications && Array.isArray(product.specifications) ? [...product.specifications] : [];
+        setCurrentProduct({ ...product, media, specifications });
         setIsEditing(true);
     };
 
@@ -153,6 +156,29 @@ const AdminDashboard = () => {
             image: prev.media?.length === 0 ? url : prev.image,
             media: [...(prev.media || []), url]
         }));
+    };
+
+    const handleAddSpecification = () => {
+        setCurrentProduct(prev => ({
+            ...prev,
+            specifications: [...(prev.specifications || []), { key: '', value: '' }]
+        }));
+    };
+
+    const handleRemoveSpecification = (index) => {
+        setCurrentProduct(prev => {
+            const newSpecs = [...prev.specifications];
+            newSpecs.splice(index, 1);
+            return { ...prev, specifications: newSpecs };
+        });
+    };
+
+    const handleSpecificationChange = (index, field, value) => {
+        setCurrentProduct(prev => {
+            const newSpecs = [...prev.specifications];
+            newSpecs[index] = { ...newSpecs[index], [field]: value };
+            return { ...prev, specifications: newSpecs };
+        });
     };
 
     const handleAddCategory = (e) => {
@@ -836,7 +862,56 @@ const AdminDashboard = () => {
                                 <textarea rows="3" value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })}></textarea>
                             </div>
 
-                            <div className="form-actions">
+                            <div className="form-group specifications-section" style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                    <label style={{ margin: 0 }}>Product Specifications</label>
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        onClick={handleAddSpecification}
+                                        style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                    >
+                                        <Plus size={14} /> Add Spec
+                                    </button>
+                                </div>
+
+                                {(!currentProduct.specifications || currentProduct.specifications.length === 0) ? (
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>No specifications added yet. Add details like Color, Material, or Compatibility.</p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {currentProduct.specifications.map((spec, index) => (
+                                            <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Name (e.g. Color)"
+                                                    value={spec.key}
+                                                    onChange={e => handleSpecificationChange(index, 'key', e.target.value)}
+                                                    style={{ flex: '1', padding: '8px', fontSize: '0.9rem' }}
+                                                    required
+                                                />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Value (e.g. Black)"
+                                                    value={spec.value}
+                                                    onChange={e => handleSpecificationChange(index, 'value', e.target.value)}
+                                                    style={{ flex: '2', padding: '8px', fontSize: '0.9rem' }}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveSpecification(index)}
+                                                    style={{ background: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c', border: '1px solid rgba(231, 76, 60, 0.2)', padding: '8px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                    title="Remove Spec"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="form-actions" style={{ marginTop: '20px' }}>
                                 <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)} disabled={isUploading}>Cancel</button>
                                 <button type="submit" className="btn-primary" disabled={isUploading}>Save Product</button>
                             </div>

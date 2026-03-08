@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { ArrowLeft, MessageCircle, Heart, ShieldCheck, Truck, RefreshCcw, ShoppingBag } from 'lucide-react';
+import ProductCard from '../components/ProductCard';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -9,6 +10,10 @@ const ProductDetail = () => {
     const navigate = useNavigate();
     const [activeMediaIndex, setActiveMediaIndex] = useState(0);
     const { products, toggleWishlist, isWishlisted, addToCart } = useShop();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     const product = products.find(p => p.id === parseInt(id));
 
@@ -32,8 +37,13 @@ const ProductDetail = () => {
         stock,
         description,
         isTrending,
-        isFlashDeal
+        isFlashDeal,
+        specifications = []
     } = product;
+
+    const relatedProducts = products
+        .filter(p => (p.category === category || p.brand === brand) && p.id !== product.id)
+        .slice(0, 4);
 
     const inWishlist = isWishlisted(product.id);
     const discountPercentage = Math.round(((mrp - discountPrice) / mrp) * 100);
@@ -191,6 +201,20 @@ const ProductDetail = () => {
                         </a>
                     </div>
 
+                    {specifications && specifications.length > 0 && (
+                        <div className="detail-specifications" style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>Specifications</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                                {specifications.map((spec, index) => (
+                                    <div key={index} style={{ display: 'flex', borderBottom: index < specifications.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: index < specifications.length - 1 ? '10px' : '0' }}>
+                                        <span style={{ flex: '0 0 40%', color: 'var(--text-muted)', fontWeight: '500' }}>{spec.key}</span>
+                                        <span style={{ flex: '1', color: 'var(--text-light)' }}>{spec.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="detail-features">
                         <div className="feature-item">
                             <ShieldCheck size={24} />
@@ -216,6 +240,23 @@ const ProductDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Related Products Section */}
+            {relatedProducts.length > 0 && (
+                <div className="related-products-section" style={{ marginTop: '50px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '30px' }}>
+                    <h2 className="related-title" style={{ color: 'var(--color-primary)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: 'bold' }}>You May Also Like</h2>
+                    <div className="related-grid">
+                        {relatedProducts.map(relatedProduct => (
+                            <ProductCard
+                                key={relatedProduct.id}
+                                product={relatedProduct}
+                                toggleWishlist={toggleWishlist}
+                                isWishlisted={isWishlisted(relatedProduct.id)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
