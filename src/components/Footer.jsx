@@ -46,10 +46,10 @@ const Footer = () => {
 
             <div className="footer-bottom" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
                 <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                    <p>&copy; 2026 iVault Accessories. All rights reserved.</p>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
                         Developed by <a href="https://www.instagram.com/_marvan_kp_?igsh=cmludzkwMm01NWI4" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'none', fontWeight: '500' }}>MARVAN</a>
                     </p>
+                    <p>&copy; 2026 iVault Accessories. All rights reserved.</p>
                 </div>
             </div>
         </footer>
