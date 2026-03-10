@@ -845,15 +845,15 @@ const AdminDashboard = () => {
                             <div className="form-row three-cols">
                                 <div className="form-group">
                                     <label>MRP (₹)</label>
-                                    <input type="number" required value={currentProduct.mrp} onChange={e => setCurrentProduct({ ...currentProduct, mrp: e.target.value === '' ? '' : Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.mrp === 0 ? '' : currentProduct.mrp} onChange={e => setCurrentProduct({ ...currentProduct, mrp: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Discount Price (₹)</label>
-                                    <input type="number" required value={currentProduct.discountPrice} onChange={e => setCurrentProduct({ ...currentProduct, discountPrice: e.target.value === '' ? '' : Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.discountPrice === 0 ? '' : currentProduct.discountPrice} onChange={e => setCurrentProduct({ ...currentProduct, discountPrice: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Stock Quantity</label>
-                                    <input type="number" required value={currentProduct.stock} onChange={e => setCurrentProduct({ ...currentProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.stock === 0 ? '' : currentProduct.stock} onChange={e => setCurrentProduct({ ...currentProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                             </div>
 

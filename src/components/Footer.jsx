@@ -40,7 +40,7 @@ const Footer = () => {
                     <h4>Categories</h4>
                     <ul>
                         {categories && categories.length > 0 ? (
-                            categories.slice(0, 5).map((category, index) => (
+                            categories.filter(cat => cat.showOnHome !== false).slice(0, 5).map((category, index) => (
                                 <li key={index}>
                                     <Link to={`/categories?filter=${encodeURIComponent(category.name)}`}>
                                         {category.name}
