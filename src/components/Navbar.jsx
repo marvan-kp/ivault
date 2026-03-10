@@ -34,8 +34,9 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="navbar glass">
-            <div className="container nav-container">
+        <>
+            <nav className="navbar glass">
+                <div className="container nav-container">
                 <button className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
                     {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -74,10 +75,10 @@ const Navbar = () => {
                     </a>
                 </div>
             </div>
-
-            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </nav>
-    );
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </>
+);
 };
 
 export default Navbar;
