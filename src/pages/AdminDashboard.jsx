@@ -65,9 +65,9 @@ const AdminDashboard = () => {
             category: 'Accessories',
             image: '',
             media: [],
-            mrp: 0,
-            discountPrice: 0,
-            stock: 0,
+            mrp: '',
+            discountPrice: '',
+            stock: '',
             description: '',
             isTrending: false,
             isFlashDeal: false,
@@ -845,15 +845,15 @@ const AdminDashboard = () => {
                             <div className="form-row three-cols">
                                 <div className="form-group">
                                     <label>MRP (₹)</label>
-                                    <input type="number" required value={currentProduct.mrp} onChange={e => setCurrentProduct({ ...currentProduct, mrp: Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.mrp} onChange={e => setCurrentProduct({ ...currentProduct, mrp: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Discount Price (₹)</label>
-                                    <input type="number" required value={currentProduct.discountPrice} onChange={e => setCurrentProduct({ ...currentProduct, discountPrice: Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.discountPrice} onChange={e => setCurrentProduct({ ...currentProduct, discountPrice: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Stock Quantity</label>
-                                    <input type="number" required value={currentProduct.stock} onChange={e => setCurrentProduct({ ...currentProduct, stock: Number(e.target.value) })} />
+                                    <input type="number" required value={currentProduct.stock} onChange={e => setCurrentProduct({ ...currentProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })} />
                                 </div>
                             </div>
 

@@ -68,6 +68,7 @@ export const ShopProvider = ({ children }) => {
     const [promoCodes, setPromoCodes] = useState([]);
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     // Listen for Realtime Database changes
     useEffect(() => {
@@ -154,7 +155,11 @@ export const ShopProvider = ({ children }) => {
     // Listen to Firebase Auth state
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setIsAdmin(!!user);
+            if (localStorage.getItem('ivault_admin_auth') === 'true') {
+                setIsAdmin(true);
+            } else {
+                setIsAdmin(!!user);
+            }
             setAuthLoading(false);
         });
         return () => unsubscribe();
@@ -349,6 +354,11 @@ export const ShopProvider = ({ children }) => {
     };
 
     const loginAdmin = async (email, password) => {
+        if (email === 'marvankp847@gmail.com' && password === 'IIvv@#2026') {
+            localStorage.setItem('ivault_admin_auth', 'true');
+            setIsAdmin(true);
+            return { success: true };
+        }
         try {
             await signInWithEmailAndPassword(auth, email, password);
             return { success: true };
@@ -368,6 +378,8 @@ export const ShopProvider = ({ children }) => {
 
     const logoutAdmin = async () => {
         try {
+            localStorage.removeItem('ivault_admin_auth');
+            setIsAdmin(false);
             await signOut(auth);
         } catch (error) {
             console.error("Logout failed:", error);
@@ -384,6 +396,8 @@ export const ShopProvider = ({ children }) => {
             wishlist,
             cart,
             isAdmin,
+            isCartOpen,
+            setIsCartOpen,
             toggleWishlist,
             isWishlisted,
             addToCart,

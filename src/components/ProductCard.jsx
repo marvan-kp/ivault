@@ -5,7 +5,7 @@ import { useShop } from '../context/ShopContext';
 import './ProductCard.css';
 
 const ProductCard = ({ product, toggleWishlist, isWishlisted }) => {
-    const { addToCart } = useShop();
+    const { addToCart, setIsCartOpen } = useShop();
     const {
         id,
         name,
@@ -109,7 +109,10 @@ const ProductCard = ({ product, toggleWishlist, isWishlisted }) => {
                         className={`btn-primary btn-buy ${stock === 0 ? 'disabled' : ''}`}
                         onClick={(e) => {
                             e.preventDefault();
-                            if (stock > 0) addToCart(product);
+                            if (stock > 0) {
+                                addToCart(product);
+                                setIsCartOpen(true);
+                            }
                         }}
                         disabled={stock === 0}
                     >

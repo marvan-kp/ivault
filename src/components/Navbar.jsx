@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Heart, Instagram, Phone, Menu, X, ShoppingBag } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import CartDrawer from './CartDrawer';
@@ -8,9 +8,13 @@ import './Navbar.css';
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const { cart } = useShop();
+    const { cart, isCartOpen, setIsCartOpen } = useShop();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    if (location.pathname.startsWith('/admin')) {
+        return null;
+    }
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -38,7 +42,6 @@ const Navbar = () => {
 
                 <Link to="/" className="nav-logo" onClick={closeMenu}>
                     <img src="/logo.png" alt="iVault Accessories" className="nav-logo-image" />
-                    <span className="logo-text">iVault <span className="logo-subtext">Accessories</span></span>
                 </Link>
 
                 <div className={`mobile-menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={closeMenu}></div>

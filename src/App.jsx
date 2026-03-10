@@ -10,16 +10,29 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
 import ScrollToTop from './components/ScrollToTop';
+import { useLocation } from 'react-router-dom';
 
-const Placeholder = ({ title }) => <div className="container" style={{ paddingTop: '100px', minHeight: '80vh' }}><h1>{title}</h1></div>;
+const Layout = ({ children }) => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  return (
+    <>
+      {!isAdminPage && <Navbar />}
+      <main className="main-content">
+        {children}
+      </main>
+      {!isAdminPage && <Footer />}
+    </>
+  );
+};
 
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <div className="app">
-        <Navbar />
-        <main className="main-content">
+        <Layout>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Products />} />
@@ -34,8 +47,7 @@ function App() {
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
-        </main>
-        <Footer />
+        </Layout>
       </div>
     </Router>
   );

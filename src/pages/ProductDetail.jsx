@@ -9,7 +9,7 @@ const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [activeMediaIndex, setActiveMediaIndex] = useState(0);
-    const { products, toggleWishlist, isWishlisted, addToCart } = useShop();
+    const { products, toggleWishlist, isWishlisted, addToCart, setIsCartOpen } = useShop();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -180,7 +180,10 @@ const ProductDetail = () => {
                             className={`btn-primary btn-buy-large ${stock === 0 ? 'disabled' : ''}`}
                             onClick={(e) => {
                                 e.preventDefault();
-                                if (stock > 0) addToCart(product);
+                                if (stock > 0) {
+                                    addToCart(product);
+                                    setIsCartOpen(true);
+                                }
                             }}
                             disabled={stock === 0}
                         >
